@@ -147,6 +147,7 @@ OCAMLFLAGS += -g -thread -w -4-9-40-42-44-45
 
 FILES[] =
 	main
+	pool
 	process
 
 #

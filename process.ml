@@ -1,6 +1,5 @@
 open Unix
 
-let _ = Printf.printf "\n"
 let base_pid = getpid ()
 
 type ('a, 'b) t = {
@@ -12,12 +11,16 @@ type ('a, 'b) t = {
   kwargs : (string * 'b) list;
   daemon : bool;
   mutable is_alive : bool;
+  mutable exn : exn option;
 }
 
 let children : int list ref = ref []
 
 let add_child p =
   children := p.pid :: !children
+
+let remove_child p =
+  children := List.filter (fun pid -> p.pid <> pid) !children
 
 let create ?(pid=0) ?(parent_pid=None) ?name ?target ?args ?(kwargs=[]) ?(daemon=false) () =
   { pid;
@@ -27,13 +30,23 @@ let create ?(pid=0) ?(parent_pid=None) ?name ?target ?args ?(kwargs=[]) ?(daemon
     args;
     kwargs;
     daemon;
-    is_alive = false }
+    is_alive = false;
+    exn = None }
+
+let terminate p =
+  Printf.printf "terminate\n%!";
+  p.is_alive <- false;
+  remove_child p;
+  exit 0
 
 let run p =
-  Printf.printf "run %d in %d\n" p.pid (getpid ());
   add_child p;
   begin match (p.target, p.args) with
-    | Some f, Some args -> f args
+    | Some f, Some args ->
+      begin try f args with
+        | exn -> Printf.printf "raised exn\n%!";p.exn <- Some exn
+      end;
+      terminate p
     | _ -> ()
   end;
   ()
@@ -44,21 +57,26 @@ let start p =
   | 0 ->
     p.pid <- getpid ();
     p.is_alive <- true;
-    Printf.printf "fork process %d\n" (getpid ());
     run p
-  | _ -> Printf.printf "parent process\n"
+  | _ ->
+    Printf.printf "parent process\n%!"
 
 let join p =
-  Printf.printf "join %d %d %d\n" base_pid p.pid (getpid ());
+  Printf.printf "join %d %d %d\n%!" base_pid p.pid (getpid ());
   if base_pid = getpid () then begin
-    Printf.printf "join at parent\n";
+    Printf.printf "join at parent\n%!";
     ignore @@ wait ()
   end else begin
-      (*
-      while p.is_alive do
-        ()
-      done;
-       *)
-    Printf.printf "exit pid %d\n" p.pid;
-    exit 0
+    Printf.printf "wait\n%!";
+    while p.is_alive do
+      ()
+    done;
+    Printf.printf "exit pid %d\n%!" p.pid
   end
+
+let core_count () =
+  let chan = open_process_in "sysctl -n hw.ncpu" in
+  let count = input_line chan in
+  close_in chan;
+  count
+
