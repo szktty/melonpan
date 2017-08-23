@@ -113,7 +113,8 @@ OCAMLPACKS[] =
 #
 # Various options
 #
-# OCAMLFLAGS    +=
+#OCAMLFLAGS += -g -thread -w A-4-9-40-42-44-45 -warn-error A
+OCAMLFLAGS += -g -thread -w -4-9-40-42-44-45
 # OCAMLCFLAGS   +=
 # OCAMLOPTFLAGS +=
 # OCAML_LINK_FLAGS +=
@@ -146,6 +147,7 @@ OCAMLPACKS[] =
 
 FILES[] =
 	main
+	process
 
 #
 PROGRAM = melonpan
