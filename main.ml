@@ -1,17 +1,15 @@
-open Unix
+open Os
 
 let () =
-  Printf.printf "base pid = %d\n%!" Process.base_pid;
+  Printf.printf "main pid = %d\n%!" (Pid.pid_exn Os.main_pid);
   Printf.printf "parent pid = %d\n%!" (getpid ());
   let f name =
     Printf.printf "current pid = %d\n%!" (getpid ());
     Printf.printf "hello %s\n%!" name;
     failwith "fail"
   in
-  let p = Process.create
-      ~parent_pid:(Some (getpid ()))
-      ~target:f ~args:"bob" () in
-  Printf.printf "child %d\n%!" p.pid;
+  Printf.printf "create process\n%!";
+  let p = Process.create ~target:f ~args:"bob" () in
   Process.start p;
   Process.join p;
   begin match p.exn with
