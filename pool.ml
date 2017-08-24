@@ -1,6 +1,6 @@
-type ('a, 'b) t = {
+type t = {
   processes : int;
-  workers : ('a, 'b) Process.t list;
+  mutable workers : Process.t list;
 }
 
 let create ?(processes=4) () =

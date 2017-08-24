@@ -18,3 +18,8 @@ let value_map opt ~default ~f =
   match opt with
   | None -> default
   | Some value -> f value
+
+let iter opt ~f =
+  match opt with
+  | None -> ()
+  | Some value -> f value
