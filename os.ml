@@ -1,33 +1,30 @@
 include Unix
 
-type process =
+type fork =
   | In_child
   | In_parent of Pid.t
 
-let current_pid () =
-  match Unix.getpid () with
-  | 0 -> In_child
-  | n -> In_parent (Pid.create_parent n)
+let pid () =
+  Pid.of_int @@ Unix.getpid ()
 
-let current_parent_pid () =
-  match current_pid () with
-  | In_parent pid -> pid
-  | In_child -> failwith "not parent"
+let pid_value () =
+  Pid.to_int @@ pid ()
 
-let main_pid =
-  match Unix.getpid () with
-  | 0 -> failwith "not parent"
-  | n -> Pid.create_parent n
+let parent_pid () =
+  match Unix.getpid (), Unix.getppid () with
+  | pid, ppid when pid <> ppid -> Some (Pid.of_int ppid)
+  | _ -> None
+
+let parent_pid_value () =
+  Pid.to_int @@ parent_pid ()
 
 let is_parent_pid () =
-  match current_pid () with
-  | In_child -> false
-  | In_parent _ -> true
+  Option.is_some @@ parent_pid ()
 
 let fork () =
   match Unix.fork () with
   | 0 -> In_child
-  | n -> In_parent (Pid.create_parent n)
+  | n -> In_parent (Pid.of_int n)
 
 let wait () =
   Unix.wait ()

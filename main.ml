@@ -1,20 +1,20 @@
-open Os
+open Printf
 
 let () =
-  Printf.printf "main pid = %d\n%!" (Pid.pid_exn Os.main_pid);
-  Printf.printf "parent pid = %d\n%!" (getpid ());
+  printf "parent pid = %d\n%!" (Os.pid_value ());
   let f name =
-    Printf.printf "current pid = %d\n%!" (getpid ());
-    Printf.printf "hello %s\n%!" name;
+    printf "\ncurrent pid = %d\n%!" (Os.pid_value ());
+    printf "hello %s\n\n%!" name;
     failwith "fail"
   in
-  Printf.printf "create process\n%!";
+  printf "create process\n%!";
   let p = Process.create ~target:f ~args:"bob" () in
   Process.start p;
+  printf "started in %d\n%!" (Os.pid_value ());
   Process.join p;
-  begin match p.exn with
-    | None -> Printf.printf "no exception\n%!"
-    | Some exn -> Printf.printf "catch exn\n%!";raise exn
+  begin match p.exit with
+    | Some (Exit_exn exn) -> printf "catch exn\n%!";raise exn
+    | _ -> printf "no exception\n%!"
   end;
-  Printf.printf "ok\n%!";
+  printf "ok\n%!";
   ()

@@ -1,24 +1,5 @@
-let used_id = ref 0
+type t = int
 
-let next_id () =
-  let id = !used_id in
-  used_id := id + 1;
-  id
+let of_int pid = pid
 
-type t = {
-  id : int;
-  pid : int option;
-  name : string option;
-}
-
-let create_child ?name () =
-  { id = next_id (); pid = None; name }
-
-let create_parent ?name pid =
-  { id = next_id (); pid = Some pid; name }
-
-let eq p1 p2 =
-  p1.id = p2.id
-
-let pid_exn p =
-  Option.value_exn p.pid
+let to_int pid = pid
