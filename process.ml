@@ -25,7 +25,6 @@ let next_id () =
   id
 
 let pid_exn p =
-  Printf.printf "pid_exn\n%!";
   Option.value_exn p.pid
 
 let create ?name ?(is_daemon=false) () =
@@ -53,22 +52,18 @@ let is_current_parent p =
   p.parent_pid = Os.pid ()
 
 let terminate p =
-  Printf.printf "terminate\n%!";
   p.is_alive <- false;
   p.exit_status <- Some (Exit_signal SIGTERM);
-  (*remove_child p;*)
   exit 0
+(*remove_child p;*)
 
 let run p ~f =
   (*add_child p;*)
   begin try f () with
     | exn ->
-      Printf.printf "raised exn\n%!";
       p.exit_status <- Some (Exit_exn exn);
-      p.is_alive <- false;
-      exit 0
-  end;
-  terminate p
+      p.is_alive <- false
+  end
 
 let start p ~f =
   (* TODO: daemon *)
@@ -76,20 +71,15 @@ let start p ~f =
     failwith "already started"
   end;
   match Os.fork () with
-  | In_parent _ ->
-    Printf.printf "fork parent\n%!"
+  | In_parent _ -> ()
   | In_child ->
-    Printf.printf "fork child\n%!";
+    p.pid <- Some (Os.pid ());
     p.is_alive <- true;
-    run p ~f
+    run p ~f;
+    terminate p
 
 let join p =
-  Printf.printf "join ppid %d in pid %d\n%!" (Pid.to_int p.parent_pid)
-    (Pid.to_int @@ Os.pid ());
   if is_current_parent p then begin
-    Printf.printf "wait\n%!";
-    while p.is_alive do
-      ()
-    done
+    ignore @@ Unix.wait ()
   end else
     failwith "only in child process\n%!"

@@ -16,7 +16,12 @@ let parent_pid () =
   | _ -> None
 
 let parent_pid_value () =
-  Pid.to_int @@ parent_pid ()
+  Option.value_map (parent_pid ())
+    ~default:None
+    ~f:(fun pid -> Some (Pid.to_int pid))
+
+let parent_pid_value_exn () =
+  Option.value_exn @@ parent_pid_value ()
 
 let is_parent_pid () =
   Option.is_some @@ parent_pid ()
@@ -28,6 +33,9 @@ let fork () =
 
 let wait () =
   Unix.wait ()
+
+let wait_pid_exn pid =
+  ignore @@ Unix.waitpid [] (Pid.to_int pid)
 
 let core_count () =
   (* Mac OS X *)
